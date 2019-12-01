@@ -1,7 +1,7 @@
-module.exports = (data, code = 200, msg = '') => {
+module.exports = (data, code = 200, message = '') => {
     return {
         data,
         code,
-        msg
+        message
     }
 }

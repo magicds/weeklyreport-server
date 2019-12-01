@@ -1,21 +1,33 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-
 mongoose.Promise = global.Promise;
 
-const deptSchema = new Schema({
-    _id: Schema.Types.ObjectId
-});
+const addMeta = require("../utils/addMetaData.js");
 
-deptSchema.pre('save', function(next) {
-    if (this.isNew) {
-        this.meta.createAt = this.meta.updateAt = Date.now();
-    } else {
-        this.meta.updateAt = Date.now();
+const departmentSchema = new Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  index: {
+    type: Number
+  },
+  leader: {
+    type: Schema.Types.ObjectId,
+    ref: "User"
+  }
+});
+addMeta(departmentSchema);
+
+departmentSchema.pre("save", async function() {
+  if (!this.index) {
+    const deptArr = await Department.find().sort({ index: -1 });
+    if (deptArr && deptArr.length) {
+      this.index = deptArr[deptArr.length - 1].index + 1;
     }
-    next();
+  }
 });
 
-const Dept = mongoose.model('User', deptSchema);
+const Department = mongoose.model("Department", departmentSchema);
 
-module.exports = User;
+module.exports = Department;
