@@ -8,7 +8,7 @@ const deptRouters = require("./department");
 const groupRouters = require("./group");
 // const scoreRouters = require('./score');
 const router = new Router({
-  prefix: "/perf/api"
+  prefix: "/fe-manage/api"
 });
 
 // todo 抽取成方法一次自动处理完成

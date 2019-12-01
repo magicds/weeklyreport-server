@@ -41,6 +41,9 @@ const userController = {
   },
   async signup(ctx) {
     let { name, email, pwd } = ctx.request.body;
+    if (!(name && email && pwd)) {
+      return ctx.throw(400);
+    }
     try {
       // 先验证是否存在
       const aimUser = await UserModel.findOne({
