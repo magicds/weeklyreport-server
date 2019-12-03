@@ -13,6 +13,11 @@ module.exports = {
       action: userController.login
     },
     {
+      method: 'get',
+      path: '/autoLogin',
+      action: userController.autoLogin
+    },
+    {
       method: 'all',
       path: '/logout',
       action: userController.logout

@@ -85,7 +85,9 @@ const userController = {
 
     if (isLogin) {
       setLoinCookie(ctx, ctx.$uid, ctx.$user.pwdSalt);
+      return (ctx.response.body = response(ctx.$user.getClientData()));
     }
+    return (ctx.response.body = response(null, 401));
   },
   async login(ctx) {
     let { name, email, pwd } = ctx.request.body;
