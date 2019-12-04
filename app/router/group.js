@@ -2,13 +2,14 @@ const groupController = require("../controllers/group");
 
 module.exports = {
   prefix: "/group",
-  anonymity: [],
-  normal: [
+  anonymity: [
     {
       method: "get",
       path: "/list",
       action: groupController.getAll
-    },
+    }
+  ],
+  normal: [
     {
       method: "post",
       path: "/add",

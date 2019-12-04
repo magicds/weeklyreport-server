@@ -4,7 +4,6 @@ const bcrypt = require("bcrypt");
 const addMeta = require("../utils/addMetaData.js");
 mongoose.Promise = global.Promise;
 
-const SALT_WORK_FACTOR = 10;
 
 const userSchema = new Schema({
   // _id: Schema.Types.ObjectId,
@@ -27,6 +26,7 @@ const userSchema = new Schema({
     type: Number,
     index: true
   },
+  gender: String,
   role: {
     // 枚举值不利于做权限判断，改成以数字表示 越大权限越高 也方便后期扩展
     // 0 unverified 已经注册、未验证
@@ -77,7 +77,8 @@ userSchema.methods.getClientData = function() {
     type: this.type,
     role: this.role,
     dept: this.dept || {},
-    group: this.group || {}
+    group: this.group || {},
+    gender: this.gender
   };
 };
 // userSchema.statics.find = function (condition, sort) {
@@ -121,14 +122,10 @@ userSchema.pre("save", async function() {
     const userArr = await User.find().sort({ index: -1 });
     if (userArr && userArr.length) {
       this.index = userArr[userArr.length - 1].index + 1;
+    }else {
+      this.index = 1;
     }
   }
-
-  const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
-  this.pwdSalt = salt;
-
-  const hash = await bcrypt.hash(this.pwd, salt);
-  this.pwd = hash;
 });
 
 const User = mongoose.model("User", userSchema);

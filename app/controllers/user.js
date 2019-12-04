@@ -1,8 +1,11 @@
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 const { COOKIE_TOKEN_KEY, COOKIE_UID_KEY } = require("../../config.js");
 const UserModel = require("../models/user");
 const response = require("../utils/response");
 const { setLoinCookie, clearLoinCookie } = require("../utils/util");
+
+const SALT_WORK_FACTOR = 10;
 
 const userController = {
   /**
@@ -17,7 +20,7 @@ const userController = {
     let uid = ctx.cookies.get(COOKIE_UID_KEY);
     try {
       if (!token || !uid) return false;
-      const user = await UserModel.findById(uid);
+      const user = await UserModel.findById(uid).populate('dept').populate('group');
       if (!user) return false;
 
       let decodeData;
@@ -65,16 +68,20 @@ const userController = {
         });
       }
       // 不存在
-      const user = new UserModel({
-        name,
-        email,
-        pwd
-      });
+      const { dept, group, gender } = ctx.request.body;
+      const signupData = { name, email, gender };
+      dept && (signupData.dept = dept);
+      group && (signupData.group = group);
+
+      const user = new UserModel(signupData);
+      // 密码处理
+      const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
+      user.pwdSalt = salt;
+      const hash = await bcrypt.hash(pwd, salt);
+      user.pwd = hash;
+
       await user.save();
-      return (ctx.response.body = {
-        code: "200",
-        data: "注册成功"
-      });
+      return (ctx.response.body = response({ message: "注册成功" }));
     } catch (error) {
       console.error(error);
       return ctx.throw(500, error.message);
@@ -100,7 +107,9 @@ const userController = {
           email
         }
       ]
-    });
+    })
+      .populate("dept")
+      .populate("group");
     if (!aimUser) {
       return ctx.throw(401, "user is not existed!");
       // return ctx.response.body = response(null, 404, 'user is not existed');

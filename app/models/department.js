@@ -4,19 +4,29 @@ mongoose.Promise = global.Promise;
 
 const addMeta = require("../utils/addMetaData.js");
 
-const departmentSchema = new Schema({
-  name: {
-    type: String,
-    required: true
+const departmentSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: true
+    },
+    index: {
+      type: Number
+    },
+    leader: {
+      type: Schema.Types.ObjectId,
+      ref: "User"
+    },
+    note: String,
+    // groups: [
+    //   {
+    //     ref: "Group",
+    //     type: Schema.Types.ObjectId
+    //   }
+    // ]
   },
-  index: {
-    type: Number
-  },
-  leader: {
-    type: Schema.Types.ObjectId,
-    ref: "User"
-  }
-});
+  { toJSON: { virtuals: true } }
+);
 addMeta(departmentSchema);
 
 departmentSchema.pre("save", async function() {
@@ -24,6 +34,8 @@ departmentSchema.pre("save", async function() {
     const deptArr = await Department.find().sort({ index: -1 });
     if (deptArr && deptArr.length) {
       this.index = deptArr[deptArr.length - 1].index + 1;
+    } else {
+      this.index = 0;
     }
   }
 });

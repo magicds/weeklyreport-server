@@ -10,6 +10,11 @@ module.exports = {
       action: deptController.getAll
     },
     {
+      method: "get",
+      path: "/tree",
+      action: deptController.getAllData
+    },
+    {
       method: "post",
       path: "/add",
       action: deptController.addDepartment
