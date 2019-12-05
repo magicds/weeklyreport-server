@@ -1,6 +1,8 @@
 const WeeklyLog = require("../models/weeklyLog");
 const response = require("../utils/response");
 
+const {getWeekDateText} = require("../utils/date");
+
 const weeklyLogController = {
   /**
    * 根据周查询所有 week 必填 user 、 group 、 dept 可选
@@ -20,13 +22,17 @@ const weeklyLogController = {
     if (dept) {
       condition.dept = dept;
     }
-    if (dept) {
-      condition.dept = dept;
+    if (group) {
+      condition.group = group;
     }
-    const list = await WeeklyLog.find(condition).sort({
-      dept: "asc",
-      group: "asc"
-    });
+    const list = await WeeklyLog.find(condition)
+      .populate("dept", "id name")
+      .populate("group", "id name")
+      .populate("user", "id name")
+      .sort({
+        dept: "asc",
+        group: "asc"
+      });
     return (ctx.response.body = response(list || []));
   },
   /**
@@ -54,31 +60,35 @@ const weeklyLogController = {
       condition.group = group;
     }
 
-    const list = await WeeklyLog.find(condition).sort({
-      dept: "asc",
-      group: "asc",
-      startDate: "asc"
-    });
+    const list = await WeeklyLog.find(condition)
+      .populate("dept", "id name")
+      .populate("group", "id name")
+      .populate("user", "id name")
+      .sort({
+        dept: "asc",
+        group: "asc",
+        startDate: "asc"
+      });
 
     return (ctx.response.body = response(list || []));
   },
-  /**
-   * 新增周报
-   * @param {*} ctx 
-   */
-  async addReport(ctx) {
-    const { week, user, dept, group, report } = ctx.request.body;
+  // /**
+  //  * 新增周报
+  //  * @param {*} ctx
+  //  */
+  // async addReport(ctx) {
+  //   const { week, user, dept, group, report } = ctx.request.body;
 
-    if (!(week && user && dept && group && report)) {
-      return ctx.throw(400);
-    }
+  //   if (!(week && user && dept && group && report)) {
+  //     return ctx.throw(400);
+  //   }
 
-    const wl = new WeeklyLog(week, user, dept, group, report);
+  //   const wl = new WeeklyLog({ week, user, dept, group, report });
 
-    await wl.save();
+  //   await wl.save();
 
-    return (ctx.response.body = response(wl));
-  },
+  //   return (ctx.response.body = response(wl));
+  // },
   /**
    * 更新周报
    *
@@ -86,25 +96,30 @@ const weeklyLogController = {
    * @returns
    */
   async updateReport(ctx) {
-    const { week, user, dept, group, report, reportId } = ctx.request.body;
+    const { week, user, dept, group, report } = ctx.request.body;
 
-    if (!(week && user && dept && group && report && reportId)) {
-      return ctx.throw(400);
+    if (!(week && user && dept && group && report)) {
+      return ctx.throw(400, new Error('非法参数'));
     }
 
-    const wl = await WeeklyLog.findByIdAndUpdate(
-      reportId,
+    // validate date
+    if (week != getWeekDateText(new Date())) {
+      return ctx.throw(400, new Error(`日期范围验证失败, 您只能提交当前周的日志！`));
+    }
+
+    let wl = await WeeklyLog.findOneAndUpdate(
+      { week, user, dept, group },
       {
-        week,
-        user,
-        dept,
-        group,
         report
       },
       {
         new: true
       }
     );
+    if (wl === null) {
+      wl = new WeeklyLog({ week, user, dept, group, report });
+      await wl.save();
+    }
 
     return (ctx.response.body = response(wl));
   }

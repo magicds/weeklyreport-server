@@ -9,6 +9,7 @@ function connect(onOk = () => {}, onError = () => {}) {
     // useMongoClient: true
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useFindAndModify: true,
     useCreateIndex: true
   };
 

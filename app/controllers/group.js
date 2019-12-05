@@ -4,7 +4,9 @@ const response = require("../utils/response");
 const groupController = {
   async getAll(ctx) {
     try {
-      const list = await Group.find().populate('dept').sort({ index: "asc" });
+      const list = await Group.find()
+        .populate("dept")
+        .sort({ index: "asc" });
       return (ctx.response.body = response(list || []));
     } catch (error) {
       console.error(error);
@@ -12,6 +14,9 @@ const groupController = {
     }
   },
   async addGroup(ctx) {
+    if (ctx.$user.role <= 10) {
+      return ctx.throw(401, new Error("权限不足"));
+    }
     const { name, leader } = ctx.request.body;
     const props = {
       name,
@@ -31,10 +36,17 @@ const groupController = {
     }
   },
   async updateGroup(ctx) {
-    const { id, data } = ctx.request.body;
+    if (ctx.$user.role <= 10) {
+      return ctx.throw(401, new Error("权限不足"));
+    }
+    const { name, leader, note, groupId } = ctx.request.body;
 
     try {
-      const dept = await Group.findByIdAndUpdate(id, data, { new: true });
+      const dept = await Group.findByIdAndUpdate(
+        groupId,
+        { name, leader, note },
+        { new: true }
+      );
       return (ctx.response.body = response(dept));
     } catch (error) {
       console.error(error);

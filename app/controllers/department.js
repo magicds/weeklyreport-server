@@ -22,11 +22,11 @@ const deptController = {
 
     const [deptList, groupList, userList] = await Promise.all([
       Department.find()
-        .populate("leader", 'id name')
+        .populate("leader", "id name")
         .sort({ index: "asc" }),
 
       Group.find()
-        .populate("leader", 'id name')
+        .populate("leader", "_id name")
         .populate("dept")
         .sort({ index: "asc" }),
 
@@ -39,10 +39,20 @@ const deptController = {
     const users = [];
     const deptMap = deptList.reduce((t, c) => {
       t[c.id] = c.toJSON();
+      // handle leader.id miss
+      const leader = t[c.id].leader;
+      if (leader && leader._id) {
+        leader.id = leader._id;
+      }
       return t;
     }, {});
     const groupMap = groupList.reduce((t, c) => {
       t[c.id] = c.toJSON();
+      // handle leader.id miss
+      const leader = t[c.id].leader;
+      if (leader && leader._id) {
+        leader.id = leader._id;
+      }
       return t;
     }, {});
     userList.forEach(u => {
@@ -90,6 +100,9 @@ const deptController = {
     }));
   },
   async addDepartment(ctx) {
+    if (ctx.$user.role <= 100) {
+      return ctx.throw(401, new Error("权限不足"));
+    }
     const { name, leader, note } = ctx.request.body;
     const props = { name, note };
     if (leader) {
@@ -106,21 +119,28 @@ const deptController = {
     }
   },
   async updateDepartment(ctx) {
-    const { id, data } = ctx.request.body;
+    if (ctx.$user.role <= 100) {
+      return ctx.throw(401, new Error("权限不足"));
+    }
+    const { name, leader, note, deptId } = ctx.request.body;
+    const props = { name, note };
+    if (leader) {
+      props.leader = leader;
+    }
 
     try {
-      const dept = await Department.findByIdAndUpdate(id, data, { new: true });
+      const dept = await Department.findByIdAndUpdate(deptId, props, { new: true });
       return (ctx.response.body = response(dept));
     } catch (error) {
       console.error(error);
-      return ctx.throw(500, error.message);
+      return ctx.throw(500, error);
     }
   },
   async deleteDepartment(ctx) {
     const id = ctx.request.body.id;
     try {
-      if (ctx.$user.role <= 100) {
-        ctx.throw(405, "权限不足");
+      if (ctx.$user.role <= 1000) {
+        ctx.throw(405, new Error('权限不足'));
       }
       await Department.findByIdAndDelete(id);
       return (ctx.response.body = response({ message: "删除成功" }));
