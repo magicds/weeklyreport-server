@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 mongoose.Promise = global.Promise;
 
-const {getStartEndByText} = require("../utils/date");
+const {getStartEndByRangeText} = require("../utils/date");
 const addMeta = require("../utils/addMetaData.js");
 
 const weeklyLogSchema = new Schema({
@@ -40,7 +40,7 @@ addMeta(weeklyLogSchema);
 weeklyLogSchema.pre("save", function(next) {
   // week 转换为周的起止日期 用于校验
   if (this.isNew) {
-    const range = getStartEndByText(this.week);
+    const range = getStartEndByRangeText(this.week);
     this.startDate = range.start;
     this.endDate = range.end;
   }

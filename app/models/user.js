@@ -19,6 +19,7 @@ const userSchema = new Schema({
     type: String
   },
   // 部门 ID
+  // TODO: danger 这是一个冗余字段，涉及修改时 需要同步修正
   dept: { type: Schema.Types.ObjectId, ref: "Department" },
   // 小组 ID
   group: { type: Schema.Types.ObjectId, ref: "Group" },

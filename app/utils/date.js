@@ -52,14 +52,27 @@ function getWeekDateText(d) {
   const { start, end } = getWeekDate(d);
   return `${date2text(start)}~${date2text(end)}`;
 }
+/**
+ * 根据 yyyy-mm-dd 的日期获取日期对象
+ *
+ * @param {string} t yyyy-mm-dd 的日期
+ * @returns 日期对象
+ */
+function getDateByText(t) {
+  const d = t.split("-");
+  d[1] -= 1;
+  return new Date(...d);
+}
 
 module.exports = {
   getWeekDateText,
-  getStartEndByText(weekText) {
+  getStartEndByRangeText(weekText) {
     const d = weekText.split("~");
+
     return {
-      start: new Date(...d[0].split("-")),
-      end: new Date(...d[1].split("-"))
+      start: getDateByText(d[0]),
+      end: getDateByText(d[1])
     };
-  }
+  },
+  getDateByText
 };

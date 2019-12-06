@@ -1,7 +1,7 @@
 const WeeklyLog = require("../models/weeklyLog");
 const response = require("../utils/response");
 
-const {getWeekDateText} = require("../utils/date");
+const { getWeekDateText, getDateByText } = require("../utils/date");
 
 const weeklyLogController = {
   /**
@@ -47,8 +47,8 @@ const weeklyLogController = {
       return ctx.throw(400, "范围格式不正常");
     }
     const condition = {
-      startDate: { $gte: new Date(...start.split("-")) },
-      endDate: { $lte: new Date(...end.split("-")) }
+      startDate: { $gte: getDateByText(start) },
+      endDate: { $lte: getDateByText(end) }
     };
     if (user) {
       condition.user = user;
@@ -99,12 +99,15 @@ const weeklyLogController = {
     const { week, user, dept, group, report } = ctx.request.body;
 
     if (!(week && user && dept && group && report)) {
-      return ctx.throw(400, new Error('非法参数'));
+      return ctx.throw(400, new Error("非法参数"));
     }
 
     // validate date
     if (week != getWeekDateText(new Date())) {
-      return ctx.throw(400, new Error(`日期范围验证失败, 您只能提交当前周的日志！`));
+      return ctx.throw(
+        400,
+        new Error(`日期范围验证失败, 您只能提交当前周的日志！`)
+      );
     }
 
     let wl = await WeeklyLog.findOneAndUpdate(
