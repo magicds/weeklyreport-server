@@ -30,9 +30,9 @@ const weeklyLogSchema = new Schema({
       };
     }
   },
-  user: { type: Schema.Types.ObjectId, required: true, index: true },
-  dept: { type: Schema.Types.ObjectId, required: true, index: true },
-  group: { type: Schema.Types.ObjectId, required: true, index: true }
+  user: { type: Schema.Types.ObjectId, required: true, index: true ,ref: 'User'},
+  dept: { type: Schema.Types.ObjectId, required: true, index: true ,ref: 'Department'},
+  group: { type: Schema.Types.ObjectId, required: true, index: true ,ref: 'Group'}
 });
 
 addMeta(weeklyLogSchema);

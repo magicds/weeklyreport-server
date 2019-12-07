@@ -13,9 +13,12 @@ const weeklyLogController = {
   async getByWeek(ctx) {
     // if (ctx.$user.role <= 100)
     // todo 权限校验
-    const { week, dept, group } = ctx.request.body;
+    const { week, dept, group, user } = ctx.request.body;
 
     const condition = {};
+    if (user) {
+      condition.user = user;
+    }
     if (week) {
       condition.week = week;
     }
