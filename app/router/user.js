@@ -1,31 +1,49 @@
-const userController = require('../controllers/user');
+const userController = require("../controllers/user");
 
 module.exports = {
-  prefix: '/user',
-  anonymity: [{
-      method: 'post',
-      path: '/signup',
+  prefix: "/user",
+  anonymity: [
+    {
+      method: "post",
+      path: "/signup",
       action: userController.signup
     },
     {
-      method: 'post',
-      path: '/login',
+      method: "post",
+      path: "/login",
       action: userController.login
     },
     {
-      method: 'get',
-      path: '/autoLogin',
+      method: "get",
+      path: "/autoLogin",
       action: userController.autoLogin
     },
     {
-      method: 'all',
-      path: '/logout',
+      method: "all",
+      path: "/logout",
       action: userController.logout
     }
   ],
-  normal: [{
-    method: 'get',
-    path: '/list',
-    action: userController.getUserList
-  }]
-}
+  normal: [
+    {
+      method: "get",
+      path: "/list",
+      action: userController.getUserList
+    },
+    {
+      method: "get",
+      path: "/verifylog",
+      action: userController.getLogList
+    },
+    {
+      method: "post",
+      path: "/verify",
+      action: userController.verifyUser
+    },
+    {
+      method: "post",
+      path: "/remove",
+      action: userController.removeUser
+    }
+  ]
+};

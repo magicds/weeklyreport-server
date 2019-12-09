@@ -80,7 +80,8 @@ userSchema.methods.getClientData = function() {
     role: this.role,
     dept: this.dept || {},
     group: this.group || {},
-    gender: this.gender
+    gender: this.gender,
+    meta: this.meta
   };
 };
 // userSchema.statics.find = function (condition, sort) {
@@ -121,9 +122,9 @@ userSchema.pre("save", async function() {
 
   // 补充 index
   if (!this.index) {
-    const userArr = await User.find().sort({ index: -1 });
+    const userArr = await User.find().sort({ index: 'desc' });
     if (userArr && userArr.length) {
-      this.index = userArr[userArr.length - 1].index + 1;
+      this.index = userArr[0].index + 1;
     }else {
       this.index = 1;
     }

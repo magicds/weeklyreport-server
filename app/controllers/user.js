@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { COOKIE_TOKEN_KEY, COOKIE_UID_KEY } = require("../../config.js");
 const UserModel = require("../models/user");
+const VerifyLog = require("../models/verifyLog");
 const response = require("../utils/response");
 const { setLoinCookie, clearLoinCookie } = require("../utils/util");
 
@@ -18,9 +19,12 @@ const userController = {
   async checkLogin(ctx /** @types Koa.Context */) {
     let token = ctx.cookies.get(COOKIE_TOKEN_KEY);
     let uid = ctx.cookies.get(COOKIE_UID_KEY);
+    // todo: Is really need check by db query every times ?
     try {
       if (!token || !uid) return false;
-      const user = await UserModel.findById(uid).populate('dept').populate('group');
+      const user = await UserModel.findById(uid)
+        .populate("dept")
+        .populate("group");
       if (!user) return false;
 
       let decodeData;
@@ -30,12 +34,13 @@ const userController = {
         console.error(error);
         return false;
       }
-      if (decodeData.uid === uid) {
+      if (decodeData.uid === uid && user.role > 0) {
         ctx.$uid = uid;
         ctx.$auth = true;
         ctx.$user = user;
         return true;
       }
+      clearLoinCookie(ctx);
       return false;
     } catch (error) {
       console.error(error);
@@ -81,8 +86,16 @@ const userController = {
       user.pwd = hash;
 
       await user.save();
+      const log = new VerifyLog({
+        type: "signup",
+        info: `${user.name} 新注册进入周报系统，请求验证。`,
+        operator: user.id,
+        targetUser: user.id,
+        date: +new Date()
+      });
+      await log.save();
       // todo 邮件通知管理员、部门leader等
-      
+
       return (ctx.response.body = response({ message: "注册成功" }));
     } catch (error) {
       console.error(error);
@@ -113,8 +126,11 @@ const userController = {
       .populate("dept")
       .populate("group");
     if (!aimUser) {
-      return ctx.throw(401, "user is not existed!");
+      return ctx.throw(401, new Error("user is not existed!"));
       // return ctx.response.body = response(null, 404, 'user is not existed');
+    }
+    if (aimUser.role <= 0) {
+      return ctx.throw(401, new Error("您还未经过认证，无法登录"));
     }
 
     if (await aimUser.comparePwd(pwd, aimUser.pwd)) {
@@ -137,7 +153,12 @@ const userController = {
     // if (ctx.$user.role <= 10) {
     //     return ctx.throw(405, '权限不足，您无法获取！');
     // }
-    const list = await UserModel.find()
+    const { unVerify, dept } = ctx.request.query;
+    const cond = unVerify != "false" ? { role: 0 } : {};
+    if (dept) {
+      cond.dept = dept;
+    }
+    const list = await UserModel.find(cond)
       .populate("dept")
       .populate("group");
 
@@ -149,6 +170,58 @@ const userController = {
     });
 
     return (ctx.response.body = response(result));
+  },
+  async verifyUser(ctx) {
+    const { uid } = ctx.request.body;
+    if (!uid) {
+      return ctx.throw(400);
+    }
+    // 权限检查
+    if (ctx.$user.role <= 100) {
+      return ctx.throw(401, new Error("权限不足"));
+    }
+    const user = await UserModel.findByIdAndUpdate(
+      uid,
+      {
+        role: 1
+      },
+      { new: true }
+    );
+    const log = new VerifyLog({
+      type: "verify",
+      info: `${ctx.$user.name} 通过了 ${user.name} 的验证请求`,
+      operator: ctx.$user.id,
+      targetUser: user.id,
+      date: +new Date()
+    });
+    await log.save();
+
+    return (ctx.response.body = response(null));
+  },
+  async getLogList(ctx) {
+    const list = await VerifyLog.find().sort({ date: "desc" });
+
+    return (ctx.response.body = response(list || []));
+  },
+  async removeUser(ctx) {
+    
+    const { uid } = ctx.request.body;
+    if (!uid) {
+      return ctx.throw(400);
+    }
+
+    const user = await UserModel.findByIdAndRemove(uid);
+
+    const log = new VerifyLog({
+      type: "delete",
+      info: `${ctx.$user.name} 删除了用户 ${user.name}`,
+      operator: ctx.$user.id,
+      targetUser: user.id,
+      date: +new Date()
+    });
+    await log.save();
+
+    return ctx.response.body = response({});
   }
 };
 
