@@ -3,10 +3,51 @@ const bcrypt = require("bcrypt");
 const { COOKIE_TOKEN_KEY, COOKIE_UID_KEY } = require("../../config.js");
 const UserModel = require("../models/user");
 const VerifyLog = require("../models/verifyLog");
+const Department = require("../models/department");
 const response = require("../utils/response");
 const { setLoinCookie, clearLoinCookie } = require("../utils/util");
 
+const { sendTypedEmail } = require("../mail/sendMail.js");
+
 const SALT_WORK_FACTOR = 10;
+
+// 用户注册，邮件给 部门 leader + 管理员
+async function sendVerifyRequestMail(user) {
+  const { name, dept } = user;
+  const adminUsers = await UserModel.where("role").gte(1000);
+  const department = await Department.findById(dept).populate("leader");
+  const adminIds = {};
+  const mailUsers = adminUsers.map(u => {
+    adminIds[u.id] = true;
+    return {
+      id: u.id,
+      name: u.name,
+      email: u.email
+    };
+  });
+  if (department && department.leader && !adminIds[department.leader.id]) {
+    mailUsers.push({
+      id: department.leader.id,
+      name: department.leader.name,
+      email: department.leader.email
+    });
+  }
+  if (mailUsers.length) {
+    sendTypedEmail({
+      users: mailUsers,
+      type: "signup",
+      verifyUsername: name
+    });
+  }
+}
+
+// 验证通过后通知用户可登录
+async function sendUserNowLogin(user) {
+  sendTypedEmail({
+    users: [user],
+    type: "verify"
+  });
+}
 
 const userController = {
   /**
@@ -94,7 +135,14 @@ const userController = {
         date: +new Date()
       });
       await log.save();
-      // todo 邮件通知管理员、部门leader等
+
+      // 邮件通知管理员、部门leader等
+      try {
+        // 后台发送即可 无需等待 也不关注结果
+        sendVerifyRequestMail(user);
+      } catch (error) {
+        console.error(error);
+      }
 
       return (ctx.response.body = response({ message: "注册成功" }));
     } catch (error) {
@@ -196,6 +244,11 @@ const userController = {
     });
     await log.save();
 
+    try {
+      // 发送验证成功的通知
+      sendUserNowLogin(user);
+    } catch (error) {}
+
     return (ctx.response.body = response(null));
   },
   async getLogList(ctx) {
@@ -204,7 +257,6 @@ const userController = {
     return (ctx.response.body = response(list || []));
   },
   async removeUser(ctx) {
-    
     const { uid } = ctx.request.body;
     if (!uid) {
       return ctx.throw(400);
@@ -221,7 +273,7 @@ const userController = {
     });
     await log.save();
 
-    return ctx.response.body = response({});
+    return (ctx.response.body = response({}));
   }
 };
 

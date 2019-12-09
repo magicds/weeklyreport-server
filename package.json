@@ -10,7 +10,11 @@
     "dev": "nodemon app.js"
   },
   "nodemonConfig": {
-    "ignore": ["init/*", "test/*", "docs/*"],
+    "ignore": [
+      "init/*",
+      "test/*",
+      "docs/*"
+    ],
     "delay": "2500"
   },
   "dependencies": {
@@ -20,7 +24,8 @@
     "koa-body": "^4.1.1",
     "koa-router": "^7.4.0",
     "koa2-cors": "^2.0.6",
-    "mongoose": "^5.7.13"
+    "mongoose": "^5.7.13",
+    "nodemailer": "^6.4.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.1"
