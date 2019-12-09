@@ -31,7 +31,7 @@ const weeklyLogController = {
     const list = await WeeklyLog.find(condition)
       .populate("dept", "id name")
       .populate("group", "id name")
-      .populate("user", "id name")
+      .populate("user", "id name extInfo")
       .sort({
         dept: "asc",
         group: "asc"

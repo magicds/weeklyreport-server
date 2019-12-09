@@ -68,8 +68,8 @@ const userController = {
         });
       }
       // 不存在
-      const { dept, group, gender } = ctx.request.body;
-      const signupData = { name, email, gender };
+      const { extInfo, dept, group, gender } = ctx.request.body;
+      const signupData = { extInfo, name, email, gender };
       dept && (signupData.dept = dept);
       group && (signupData.group = group);
 
@@ -81,6 +81,8 @@ const userController = {
       user.pwd = hash;
 
       await user.save();
+      // todo 邮件通知管理员、部门leader等
+      
       return (ctx.response.body = response({ message: "注册成功" }));
     } catch (error) {
       console.error(error);
