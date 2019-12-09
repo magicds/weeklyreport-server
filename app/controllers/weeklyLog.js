@@ -63,7 +63,7 @@ const weeklyLogController = {
       condition.group = group;
     }
 
-    const list = await WeeklyLog.find(condition)
+    const logs = await WeeklyLog.find(condition)
       .populate("dept", "id name")
       .populate("group", "id name")
       .populate("user", "id name")
@@ -72,7 +72,7 @@ const weeklyLogController = {
         group: "asc",
         startDate: "asc"
       });
-
+    const list = logs.filter(log=> !!log.user);
     return (ctx.response.body = response(list || []));
   },
   // /**
