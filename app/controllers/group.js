@@ -42,12 +42,16 @@ const groupController = {
     const { name, leader, note, groupId } = ctx.request.body;
 
     try {
-      const dept = await Group.findByIdAndUpdate(
-        groupId,
-        { name, leader, note },
-        { new: true }
-      );
-      return (ctx.response.body = response(dept));
+      let group = await Group.findById(groupId).populate("leader");
+      // 将之前的leader权限还原
+      if (group.leader && group.leader.role == 10) {
+        group.leader.role = 1;
+        await group.leader.save();
+      }
+      group.set({ name, leader, note });
+      group = await group.save();
+
+      return (ctx.response.body = response(group));
     } catch (error) {
       console.error(error);
       return ctx.throw(500, error.message);

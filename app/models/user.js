@@ -81,6 +81,7 @@ userSchema.methods.getClientData = function() {
     dept: this.dept || {},
     group: this.group || {},
     gender: this.gender,
+    extInfo: this.extInfo,
     meta: this.meta
   };
 };

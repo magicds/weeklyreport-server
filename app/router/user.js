@@ -44,6 +44,11 @@ module.exports = {
       method: "post",
       path: "/remove",
       action: userController.removeUser
+    },
+    {
+      method: "post",
+      path: "/update",
+      action: userController.updateUser
     }
   ]
 };

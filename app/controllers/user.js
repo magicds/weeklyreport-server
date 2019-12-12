@@ -198,17 +198,15 @@ const userController = {
     return (ctx.response.body = response("logout sussess"));
   },
   async getUserList(ctx) {
-    // if (ctx.$user.role <= 10) {
-    //     return ctx.throw(405, '权限不足，您无法获取！');
-    // }
     const { unVerify, dept } = ctx.request.query;
-    const cond = unVerify != "false" ? { role: 0 } : {};
+    const cond = unVerify === "true" ? { role: 0 } : {};
     if (dept) {
       cond.dept = dept;
     }
     const list = await UserModel.find(cond)
       .populate("dept")
-      .populate("group");
+      .populate("group")
+      .sort({ index: "asc" });
 
     if (!list || !list.length) return (ctx.response.body = response([]));
 
@@ -237,7 +235,7 @@ const userController = {
     );
     const log = new VerifyLog({
       type: "verify",
-      info: `${ctx.$user.name} 通过了 ${user.name} 的验证请求`,
+      info: `${ctx.$user.name} 通过了 ${user.name} 的验证请求。`,
       operator: ctx.$user.id,
       targetUser: user.id,
       date: +new Date()
@@ -252,14 +250,17 @@ const userController = {
     return (ctx.response.body = response(null));
   },
   async getLogList(ctx) {
-    const list = await VerifyLog.find().sort({ date: "desc" });
+    let limit = parseInt(ctx.request.query.limit, 10) || 20;
+    const list = await VerifyLog.find()
+      .sort({ date: "desc" })
+      .limit(limit);
 
     return (ctx.response.body = response(list || []));
   },
   async removeUser(ctx) {
     const { uid } = ctx.request.body;
     if (!uid) {
-      return ctx.throw(400);
+      return ctx.throw(400, new Error("请求参数不完整"));
     }
 
     const user = await UserModel.findByIdAndRemove(uid);
@@ -274,6 +275,35 @@ const userController = {
     await log.save();
 
     return (ctx.response.body = response({}));
+  },
+  async updateUser(ctx) {
+    const { id } = ctx.request.body;
+    if (!id) {
+      return ctx.throw(400, new Error("请求参数不完整"));
+    }
+
+    // 只能修改自己的信息 或 组长以上才能修改信息
+    if (!(ctx.$user.role >= 10 && ctx.$user.id == id)) {
+      return ctx.throw(401, new Error("无权修改"));
+    }
+
+    const user = await UserModel.findById(id);
+    // const { email, name, extInfo, dept, group, gender } = ctx.request.body;
+    const props = {};
+    ["email", "name", "extInfo", "dept", "group", "gender"].forEach(k => {
+      const v = ctx.request.body[k];
+      if (v !== undefined) {
+        props[k] = v;
+      }
+    });
+    user.set(props);
+    await user.save();
+    await user
+      .populate("dept")
+      .populate("group")
+      .execPopulate();
+
+    return (ctx.response.body = response(user.getClientData()));
   }
 };
 

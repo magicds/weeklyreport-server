@@ -109,10 +109,6 @@ const sendTypedEmail = data => {
   sendOneMail(users[i]);
 
   function sendOneMail(user) {
-    // const user = users.splice(0, 1)[0];
-    // const needNext = users.length;
-    // console.log(user);
-
     return transporter
       .sendMail({
         to: user.email,

@@ -129,7 +129,18 @@ const deptController = {
     }
 
     try {
-      const dept = await Department.findByIdAndUpdate(deptId, props, { new: true });
+      let dept = await Department.findById(deptId).populate("leader");
+      // 将之前的leader权限还原
+      if (dept.leader && dept.leader.role == 100) {
+        const isGroupLeader = await Group.find({
+          leader: dept.leader.id
+        }).count();
+        dept.leader.role = isGroupLeader ? 10 : 1;
+        await dept.leader.save();
+      }
+      dept.set(props);
+      dept = await dept.save();
+
       return (ctx.response.body = response(dept));
     } catch (error) {
       console.error(error);
@@ -140,7 +151,7 @@ const deptController = {
     const id = ctx.request.body.id;
     try {
       if (ctx.$user.role <= 1000) {
-        ctx.throw(405, new Error('权限不足'));
+        ctx.throw(405, new Error("权限不足"));
       }
       await Department.findByIdAndDelete(id);
       return (ctx.response.body = response({ message: "删除成功" }));

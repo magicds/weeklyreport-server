@@ -38,20 +38,22 @@ addMeta(groupSchema);
 groupSchema.pre("save", async function() {
   // 补充排序值
   if (!this.index) {
-    const group = await Group.find().sort({ index: -1 });
+    const group = await Group.find().sort({ index: 'desc' });
     if (group && group.length) {
-      this.index = group[group.length - 1].index + 1;
+      this.index = group[0].index + 1;
     } else {
       this.index = 0;
     }
   }
 
   // 修改 leader 的时候同步修改人员小组指向
+  // 同时提升权限
   if (this.leader) {
-    const aimUser = await User.findById(this.leader);
-    if (aimUser.group != this.id) {
-      aimUser.set("group", this.id);
-      await aimUser.save();
+    const newLeader = await User.findById(this.leader);
+    if (newLeader.group != this.id || newLeader.role <= 10) {
+      newLeader.set("group", this.id);
+      newLeader.set("role", 10);
+      await newLeader.save();
     }
   }
 });
