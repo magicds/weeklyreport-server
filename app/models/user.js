@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const addMeta = require("../utils/addMetaData.js");
 mongoose.Promise = global.Promise;
 
+const SALT_WORK_FACTOR = 10;
 
 const userSchema = new Schema({
   // _id: Schema.Types.ObjectId,
@@ -85,6 +86,21 @@ userSchema.methods.getClientData = function() {
     meta: this.meta
   };
 };
+
+/**
+ * 生成用户密码
+ *
+ * @returns {Promise}
+ */
+userSchema.methods.setPwd = async function(pwd) {
+  // 密码处理
+  const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
+  this.pwdSalt = salt;
+  const hash = await bcrypt.hash(pwd, salt);
+  this.pwd = hash;
+  return this;
+};
+
 // userSchema.statics.find = function (condition, sort) {
 //     return this.find(condition).sort(sort || 'meta.updateAt')
 // }
@@ -123,10 +139,10 @@ userSchema.pre("save", async function() {
 
   // 补充 index
   if (!this.index) {
-    const userArr = await User.find().sort({ index: 'desc' });
+    const userArr = await User.find().sort({ index: "desc" });
     if (userArr && userArr.length) {
       this.index = userArr[0].index + 1;
-    }else {
+    } else {
       this.index = 1;
     }
   }

@@ -131,7 +131,7 @@ const deptController = {
     try {
       let dept = await Department.findById(deptId).populate("leader");
       // 将之前的leader权限还原
-      if (dept.leader && dept.leader.role == 100) {
+      if (dept.leader && dept.leader.id != leader && dept.leader.role == 100) {
         const isGroupLeader = await Group.find({
           leader: dept.leader.id
         }).count();

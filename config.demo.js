@@ -1,5 +1,5 @@
 module.exports = {
-  port: process.env.APP_PORT || "2222",
+  port: process.env.APP_PORT || 2222,
   db: {
     servername: "192.168.201.159",
     database: "fe_manage",

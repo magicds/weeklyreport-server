@@ -9,7 +9,7 @@ const groupRouters = require("./group");
 const weeklyLogRouters = require("./weeklyLog");
 // const scoreRouters = require('./score');
 const router = new Router({
-  prefix: "/fe-manage/api"
+  prefix: "/weeklyreport-new/api"
 });
 
 // todo 抽取成方法一次自动处理完成

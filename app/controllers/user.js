@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 const { COOKIE_TOKEN_KEY, COOKIE_UID_KEY } = require("../../config.js");
 const UserModel = require("../models/user");
 const VerifyLog = require("../models/verifyLog");
@@ -9,7 +8,7 @@ const { setLoinCookie, clearLoinCookie } = require("../utils/util");
 
 const { sendTypedEmail } = require("../mail/sendMail.js");
 
-const SALT_WORK_FACTOR = 10;
+const DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
 
 // 用户注册，邮件给 部门 leader + 管理员
 async function sendVerifyRequestMail(user) {
@@ -121,10 +120,11 @@ const userController = {
 
       const user = new UserModel(signupData);
       // 密码处理
-      const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
-      user.pwdSalt = salt;
-      const hash = await bcrypt.hash(pwd, salt);
-      user.pwd = hash;
+      await user.setPwd(pwd);
+      // const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
+      // user.pwdSalt = salt;
+      // const hash = await bcrypt.hash(pwd, salt);
+      // user.pwd = hash;
 
       await user.save();
       const log = new VerifyLog({
@@ -263,7 +263,13 @@ const userController = {
       return ctx.throw(400, new Error("请求参数不完整"));
     }
 
-    const user = await UserModel.findByIdAndRemove(uid);
+    const user = await UserModel.findById(uid);
+
+    if (ctx.$user.role < user.role) {
+      return ctx.throw(400, new Error("您只能删除权限小于自己的用户"));
+    }
+
+    await user.remove();
 
     const log = new VerifyLog({
       type: "delete",
@@ -283,7 +289,7 @@ const userController = {
     }
 
     // 只能修改自己的信息 或 组长以上才能修改信息
-    if (!(ctx.$user.role >= 10 && ctx.$user.id == id)) {
+    if (!(ctx.$user.role >= 10 || ctx.$user.id == id)) {
       return ctx.throw(401, new Error("无权修改"));
     }
 
@@ -304,6 +310,41 @@ const userController = {
       .execPopulate();
 
     return (ctx.response.body = response(user.getClientData()));
+  },
+  async sendResetPwd(ctx) {
+    const { email } = ctx.request.body;
+    if (!email) {
+      return ctx.throw(400, new Error("请求参数不完整"));
+    }
+    const user = await UserModel.findOne({ email });
+
+    // 重置密码连接 1 天内有效
+    const endDate = new Date(+new Date() + DAY_MILLISECONDS * 1).toISOString();
+
+    // const token = user.pwd
+  },
+  /**
+   * 修改密码
+   */
+  async updatePwd(ctx) {
+    const { uid, oldPwd, newPwd } = ctx.request.body;
+    if (!uid) {
+      return ctx.throw(400, new Error("必须提供uid"));
+    }
+    const user = await UserModel.findById(uid);
+    const isMatch = await user.comparePwd(oldPwd);
+    if (!isMatch) {
+      return ctx.throw(400, new Error("原始密码错误"));
+    }
+
+    await user.setPwd(newPwd);
+
+    // 如果修改的是自己的密码 则token销毁
+    if (uid === ctx.$uid) {
+      clearLoinCookie();
+    }
+
+    return (ctx.response.body = response({ massage: "密码修改成功" }));
   }
 };
 

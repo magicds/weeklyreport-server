@@ -44,7 +44,7 @@ const groupController = {
     try {
       let group = await Group.findById(groupId).populate("leader");
       // 将之前的leader权限还原
-      if (group.leader && group.leader.role == 10) {
+      if (group.leader && group.leader.id != leader && group.leader.role == 10) {
         group.leader.role = 1;
         await group.leader.save();
       }
