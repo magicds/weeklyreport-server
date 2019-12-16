@@ -6,7 +6,7 @@ const Department = require("../models/department");
 const response = require("../utils/response");
 const { setLoinCookie, clearLoinCookie } = require("../utils/util");
 
-const { sendTypedEmail } = require("../mail/sendMail.js");
+const { sendTypedEmail, sendMail } = require("../mail/sendMail.js");
 
 const DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
 
@@ -311,17 +311,74 @@ const userController = {
 
     return (ctx.response.body = response(user.getClientData()));
   },
-  async sendResetPwd(ctx) {
+  async sendResetPwdMail(ctx) {
     const { email } = ctx.request.body;
     if (!email) {
       return ctx.throw(400, new Error("请求参数不完整"));
     }
     const user = await UserModel.findOne({ email });
 
-    // 重置密码连接 1 天内有效
-    const endDate = new Date(+new Date() + DAY_MILLISECONDS * 1).toISOString();
+    const DAYS = 1;
 
-    // const token = user.pwd
+    // 重置密码连接 1 天内有效
+    const endDate = new Date(
+      +new Date() + DAY_MILLISECONDS * DAYS
+    ).toISOString();
+
+    const token = jwt.sign(
+      {
+        key: user.pwd,
+        endDate: endDate
+      },
+      user.pwdSalt,
+      {
+        expiresIn: `${DAYS} days`
+      }
+    );
+
+    const link = `https://fe.epoint.com.cn/weeklyreport-new/resetPwd?token=${global.encodeURIComponent(
+      token
+    )}&date=${global.encodeURIComponent(endDate)}&uid=${global.encodeURIComponent(uid)}`;
+
+    const mailedRes = await sendMail({
+      to: user.email,
+      subject: "[新点前端]密码重置",
+      html: `
+            <p>${user.name}:</p>
+            <p>您正在申请重置新点其前端周报的密码，如确认是您自己的操作，请点击以下链接继续。（链接24h内有效）</p>
+            <p><a href="${link}" target="_blank>${link}</a></p>
+            <p>若链接无法点击，请复制以下内容到浏览器地址栏打开：<br/>${link}</p>
+            `
+    }).then(res => {
+      console.log(`${user.name}请求重置密码的邮件已经发送成功`);
+    });
+
+    return (ctx.response.body = response(mailedRes));
+  },
+  async resetPwd(ctx) {
+    const { token, newPwd, uid } = ctx.request.body;
+    if (!token || !newPwd || uid) {
+      return ctx.throw(400, new Error("请求参数错误"));
+    }
+
+    const user = await UserModel.findById(uid);
+
+    const data = jwt.verify(token, user.pwdSalt);
+
+    if (!data || data.key != user.pwd) {
+      return ctx.throw(400, new Error("无法有效确认您的身份，无法重置密码"));
+    }
+    // check date
+    const tokenEndDate = +new Date(data.endDate);
+    if (+new Date() > tokenEndDate) {
+      return ctx.throw(400, new Error("您的链接已过期，无法重置密码"));
+    }
+
+    await user.setPwd(newPwd);
+
+    return (ctx.response.body = response({
+      message: "密码重置成功，请使用新密码登录"
+    }));
   },
   /**
    * 修改密码

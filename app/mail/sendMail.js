@@ -55,7 +55,7 @@ const getMailContent = (type, injectedData) => {
       content = `
               <p>${injectedData.name}:</p>
               <p>您好，今天又是周五啦，请记得填写本周周报：</p>
-              <p><a href="https://fe.epoint.com.cn/weeklyreport-new/main/input" target="_black">https://fe.epoint.com.cn/weeklyreport-new/main/input</a></p>
+              <p><a href="https://fe.epoint.com.cn/weeklyreport-new/main/input" target="_blank">https://fe.epoint.com.cn/weeklyreport-new/main/input</a></p>
               <p>——来自新点前端周报，预祝您周末愉快！</p>
           `;
       break;
@@ -63,7 +63,7 @@ const getMailContent = (type, injectedData) => {
       content = `
               <p>${injectedData.name}:</p>
               <p>您好，<span style="color:#f1a325;">今天已经是周六了，您还没填写本周周报</span>，请及时点击下方链接进行填写：</p>
-              <p><a href="https://fe.epoint.com.cn/weeklyreport-new/main/input" target="_black">https://fe.epoint.com.cn/weeklyreport-new/main/input</a></p>
+              <p><a href="https://fe.epoint.com.cn/weeklyreport-new/main/input" target="_blank">https://fe.epoint.com.cn/weeklyreport-new/main/input</a></p>
               <p>——来自新点前端周报，祝您周末愉快！</p>
           `;
       break;
@@ -71,14 +71,14 @@ const getMailContent = (type, injectedData) => {
       content = `
               <p>${injectedData.name}:</p>
               <p>您好，<span style="color:#ea644a;">今天已经是周日了，您还没填写本周周报</span>，请点击下方链接进入填写，务必在今天完成填写</p>
-              <p><a href="https://fe.epoint.com.cn/weeklyreport-new/main/input" target="_black">https://fe.epoint.com.cn/weeklyreport-new/main/input</a></p>
+              <p><a href="https://fe.epoint.com.cn/weeklyreport-new/main/input" target="_blank">https://fe.epoint.com.cn/weeklyreport-new/main/input</a></p>
               <p>再忙也不要忘记填写周报哦！</p>
           `;
       break;
     case "signup":
       content = `
               <p>${injectedData.name}:</p>
-              <p>您好，<span style="color:#ea644a;">${injectedData.verifyUsername}</span>，已经注册进入周报系统。</p> <p><span style="color:#ea644a;">如果您确认 TA 是团队成员</span>，请及时点击下方链接通过其验证请求（验证通过的用户才能正常使用周报系统）。</p><p><a href="https://fe.epoint.com.cn/weeklyreport-new/main/verify" target="_black">https://fe.epoint.com.cn/weeklyreport-new/main/verify</a></p>
+              <p>您好，<span style="color:#ea644a;">${injectedData.verifyUsername}</span>，已经注册进入周报系统。</p> <p><span style="color:#ea644a;">如果您确认 TA 是团队成员</span>，请及时点击下方链接通过其验证请求（验证通过的用户才能正常使用周报系统）。</p><p><a href="https://fe.epoint.com.cn/weeklyreport-new/main/verify" target="_blank">https://fe.epoint.com.cn/weeklyreport-new/main/verify</a></p>
           `;
       break;
     case "verify":
@@ -86,7 +86,7 @@ const getMailContent = (type, injectedData) => {
                 <p>${injectedData.name}:</p>
                 <p>您好，您已经通过了认证，欢迎进去前端研发部。</p>
                 <p>您现在可以登录了。</p>
-                <p><a href="https://fe.epoint.com.cn/weeklyreport-new/login" target="_black">https://fe.epoint.com.cn/weeklyreport-new/login</a></p>
+                <p><a href="https://fe.epoint.com.cn/weeklyreport-new/login" target="_blank">https://fe.epoint.com.cn/weeklyreport-new/login</a></p>
             `;
       break;
     default:

@@ -60,7 +60,7 @@ const userSchema = new Schema({
 });
 /**
  * 比较密码是否匹配
- * @param {String} pwd 用户提交的密码，经过 base64 编码的
+ * @param {String} pwd 用户提交的密码
  * @returns {Promise<Boolean>} 密码是否匹配
  */
 userSchema.methods.comparePwd = function(pwd) {
