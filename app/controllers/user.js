@@ -338,7 +338,9 @@ const userController = {
 
     const link = `https://fe.epoint.com.cn/weeklyreport-new/resetPwd?token=${global.encodeURIComponent(
       token
-    )}&date=${global.encodeURIComponent(endDate)}&uid=${global.encodeURIComponent(uid)}`;
+    )}&date=${global.encodeURIComponent(
+      endDate
+    )}&uid=${global.encodeURIComponent(user.id)}`;
 
     const mailedRes = await sendMail({
       to: user.email,
@@ -346,35 +348,45 @@ const userController = {
       html: `
             <p>${user.name}:</p>
             <p>您正在申请重置新点其前端周报的密码，如确认是您自己的操作，请点击以下链接继续。（链接24h内有效）</p>
-            <p><a href="${link}" target="_blank>${link}</a></p>
+            <p><a href="${link}" target="_blank">${link}</a></p>
             <p>若链接无法点击，请复制以下内容到浏览器地址栏打开：<br/>${link}</p>
             `
     }).then(res => {
       console.log(`${user.name}请求重置密码的邮件已经发送成功`);
+      return res;
     });
 
     return (ctx.response.body = response(mailedRes));
   },
   async resetPwd(ctx) {
     const { token, newPwd, uid } = ctx.request.body;
-    if (!token || !newPwd || uid) {
+    if (!token || !newPwd || !uid) {
       return ctx.throw(400, new Error("请求参数错误"));
     }
 
     const user = await UserModel.findById(uid);
 
-    const data = jwt.verify(token, user.pwdSalt);
+    const data = await new Promise((resolve, reject) => {
+      jwt.verify(token, user.pwdSalt, (error, data) => {
+        if (!error && data) {
+          return resolve(data);
+        }
+        // return reject(new Error(''));
+        resolve(null);
+      });
+    });
 
     if (!data || data.key != user.pwd) {
-      return ctx.throw(400, new Error("无法有效确认您的身份，无法重置密码"));
+      return ctx.throw(400, new Error("无法有效确认您的身份，无法重置密码。"));
     }
     // check date
     const tokenEndDate = +new Date(data.endDate);
     if (+new Date() > tokenEndDate) {
-      return ctx.throw(400, new Error("您的链接已过期，无法重置密码"));
+      return ctx.throw(400, new Error("您的链接已过期，无法重置密码。"));
     }
 
     await user.setPwd(newPwd);
+    await user.save();
 
     return (ctx.response.body = response({
       message: "密码重置成功，请使用新密码登录"

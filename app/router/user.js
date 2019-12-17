@@ -22,6 +22,16 @@ module.exports = {
       method: "all",
       path: "/logout",
       action: userController.logout
+    },
+    {
+      method: "post",
+      path: "/sendResetPwdMail",
+      action: userController.sendResetPwdMail
+    },
+    {
+      method: "post",
+      path: "/resetPwd",
+      action: userController.resetPwd
     }
   ],
   normal: [
@@ -49,6 +59,11 @@ module.exports = {
       method: "post",
       path: "/update",
       action: userController.updateUser
+    },
+    {
+      method: "post",
+      path: "/updatePwd",
+      action: userController.updatePwd
     }
   ]
 };
