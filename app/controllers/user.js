@@ -3,6 +3,7 @@ const { COOKIE_TOKEN_KEY, COOKIE_UID_KEY } = require("../../config.js");
 const UserModel = require("../models/user");
 const VerifyLog = require("../models/verifyLog");
 const Department = require("../models/department");
+const Group = require("../models/group");
 const response = require("../utils/response");
 const { setLoinCookie, clearLoinCookie } = require("../utils/util");
 
@@ -12,23 +13,33 @@ const DAY_MILLISECONDS = 1000 * 60 * 60 * 24;
 
 // 用户注册，邮件给 部门 leader + 管理员
 async function sendVerifyRequestMail(user) {
-  const { name, dept } = user;
+  const { name, dept, group } = user;
   const adminUsers = await UserModel.where("role").gte(1000);
   const department = await Department.findById(dept).populate("leader");
-  const adminIds = {};
+  const targetGroup = await Group.findById(group).populate("leader");
+  const mailIds = {};
   const mailUsers = adminUsers.map(u => {
-    adminIds[u.id] = true;
+    mailIds[u.id] = true;
     return {
       id: u.id,
       name: u.name,
       email: u.email
     };
   });
-  if (department && department.leader && !adminIds[department.leader.id]) {
+  if (department && department.leader && !mailIds[department.leader.id]) {
+    mailIds[department.leader.id] = true;
     mailUsers.push({
       id: department.leader.id,
       name: department.leader.name,
       email: department.leader.email
+    });
+  }
+  if (targetGroup && targetGroup.leader && !mailIds[targetGroup.leader.id]) {
+    mailIds[targetGroup.leader.id] = true;
+    mailUsers.push({
+      id: targetGroup.leader.id,
+      name: targetGroup.leader.name,
+      email: targetGroup.leader.email
     });
   }
   if (mailUsers.length) {
