@@ -30,7 +30,9 @@ const deptController = {
         .populate("dept")
         .sort({ index: "asc" }),
 
-      User.find()
+      User.find({
+        role: { $gte: 1 }
+      })
         .populate("group")
         .populate("dept")
         .sort({ index: "asc" })

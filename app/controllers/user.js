@@ -210,7 +210,7 @@ const userController = {
   },
   async getUserList(ctx) {
     const { unVerify, dept } = ctx.request.query;
-    const cond = unVerify === "true" ? { role: 0 } : {};
+    const cond = unVerify === "true" ? { role: 0 } : { role: { $gte: 1 } };
     if (dept) {
       cond.dept = dept;
     }
