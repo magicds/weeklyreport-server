@@ -347,7 +347,7 @@ const userController = {
       }
     );
 
-    const link = `https://fe.epoint.com.cn/weeklyreport-new/resetPwd?token=${global.encodeURIComponent(
+    const link = `https://fe.epoint.com.cn/weeklyreport-new/setNewPwd?token=${global.encodeURIComponent(
       token
     )}&date=${global.encodeURIComponent(
       endDate
