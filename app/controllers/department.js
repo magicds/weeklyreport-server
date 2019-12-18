@@ -121,7 +121,7 @@ const deptController = {
     }
   },
   async updateDepartment(ctx) {
-    if (ctx.$user.role <= 100) {
+    if (ctx.$user.role < 100) {
       return ctx.throw(401, new Error("权限不足"));
     }
     const { name, leader, note, deptId } = ctx.request.body;
