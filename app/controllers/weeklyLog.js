@@ -1,4 +1,5 @@
 const WeeklyLog = require("../models/weeklyLog");
+const UserModel = require("../models/user");
 const response = require("../utils/response");
 
 const { getWeekDateText, getDateByText } = require("../utils/date");
@@ -39,12 +40,12 @@ const weeklyLogController = {
     return (ctx.response.body = response(list || []));
   },
   /**
-   * 根据周日期范围查询 start end 必填 user 、 group 、 dept 可选
+   * 根据周日期范围查询 start end 必填 user 、  dept 可选
    *
    * @param {*} ctx
    */
   async getByWeekRange(ctx) {
-    const { start, end, user, dept, group } = ctx.request.body;
+    const { start, end, user, dept } = ctx.request.body;
     const reg = /^\d{4}-\d{2}-\d{2}$/;
     if (!(start && end && reg.test(start) && reg.test(end))) {
       return ctx.throw(400, "范围格式不正常");
@@ -56,11 +57,15 @@ const weeklyLogController = {
     if (user) {
       condition.user = user;
     }
+    // 传递dept的情况下 根据 dept 查询人员再查询日志 按人算而非部门
     if (dept) {
-      condition.dept = dept;
-    }
-    if (group) {
-      condition.group = group;
+      // condition.dept = dept;
+      const deptUserList = await UserModel.find({dept: dept});
+      if (deptUserList && deptUserList.length) {
+        condition.user = {
+          '$in': deptUserList.map(u=> u.id)
+        }
+      }
     }
 
     const logs = await WeeklyLog.find(condition)
