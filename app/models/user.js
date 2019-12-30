@@ -79,6 +79,7 @@ userSchema.methods.getClientData = function() {
     id: this._id,
     type: this.type,
     role: this.role,
+    index: this.index,
     dept: this.dept || {},
     group: this.group || {},
     gender: this.gender,
