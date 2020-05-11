@@ -234,7 +234,7 @@ const userController = {
       return ctx.throw(400);
     }
     // 权限检查
-    if (ctx.$user.role <= 100) {
+    if (ctx.$user.role < 100) {
       return ctx.throw(401, new Error("权限不足"));
     }
     const user = await UserModel.findByIdAndUpdate(
