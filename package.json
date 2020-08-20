@@ -18,7 +18,7 @@
     "delay": "2500"
   },
   "dependencies": {
-    "bcrypt": "3.0.0",
+    "bcrypt": "5.0.0",
     "jsonwebtoken": "^8.5.1",
     "koa": "^2.11.0",
     "koa-body": "^4.1.1",
